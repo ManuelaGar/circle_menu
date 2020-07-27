@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:vector_math/vector_math.dart' show radians;
 
+String audio = 'Silence';
+
 void main() {
   runApp(MyApp());
 }
@@ -14,9 +16,41 @@ class MyApp extends StatelessWidget {
       home: Scaffold(
         body: Container(
           alignment: Alignment.center,
-          child: RadialMenu(),
+          child: ShowSheetButton(),
         ),
       ),
+    );
+  }
+}
+
+class ShowSheetButton extends StatefulWidget {
+  @override
+  _ShowSheetButtonState createState() => _ShowSheetButtonState();
+}
+
+class _ShowSheetButtonState extends State<ShowSheetButton> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        FloatingActionButton(
+          heroTag: 'btn',
+          onPressed: () {
+            Navigator.of(context)
+                .push(PageRouteBuilder(
+                    opaque: false,
+                    pageBuilder: (BuildContext context, _, __) => RadialMenu()))
+                .then((value) {
+              setState(() {
+                audio = value;
+              });
+            });
+          },
+          child: Icon(Icons.music_note),
+        ),
+        Text('Selected audio: ${audio[0].toUpperCase()}${audio.substring(1)}')
+      ],
     );
   }
 }
@@ -38,8 +72,19 @@ class _RadialMenuState extends State<RadialMenu>
   }
 
   @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SafeArea(child: RadialAnimation(controller: controller));
+    return Scaffold(
+      backgroundColor: Colors.black87,
+      body: SafeArea(
+        child: RadialAnimation(controller: controller),
+      ),
+    );
   }
 }
 
@@ -75,14 +120,19 @@ class RadialAnimation extends StatefulWidget {
 }
 
 class _RadialAnimationState extends State<RadialAnimation> {
-  String audio = 'Silence';
-
   _open() {
     widget.controller.forward();
   }
 
   _close() {
     widget.controller.reverse();
+    Navigator.pop(context, audio);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _open();
   }
 
   _buildButton(double angle, {String image}) {
@@ -95,7 +145,6 @@ class _RadialAnimationState extends State<RadialAnimation> {
         padding: EdgeInsets.all(5.0),
         child: GestureDetector(
           onTap: () {
-            _close();
             setState(() {
               audio = image;
             });
@@ -109,10 +158,10 @@ class _RadialAnimationState extends State<RadialAnimation> {
         width: 90.0,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(50.0),
-          color: Colors.white54,
+          color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
+              color: Colors.grey.withOpacity(0.3),
               spreadRadius: 3,
               blurRadius: 7,
               offset: Offset(3, 3),
@@ -132,7 +181,7 @@ class _RadialAnimationState extends State<RadialAnimation> {
           mainAxisAlignment: MainAxisAlignment.end,
           children: <Widget>[
             Expanded(
-              flex: 2,
+              flex: 1,
               child: Container(
                 alignment: Alignment.bottomCenter,
               ),
@@ -153,25 +202,22 @@ class _RadialAnimationState extends State<RadialAnimation> {
                     _buildButton(225, image: 'bird'),
                     _buildButton(270, image: 'nature'),
                     _buildButton(315, image: 'silence'),
-                    Container(
-                      color: Colors.white,
-                      height: 120,
-                      width: 120,
+                    Transform.scale(
+                      scale: widget.scale.value,
+                      child: FloatingActionButton(
+                        heroTag: 'btn1',
+                        child: Icon(Icons.music_note),
+                        onPressed: _open,
+                        backgroundColor: Color(0xFF008CCE),
+                      ),
                     ),
                     Transform.scale(
                       scale: widget.scale.value - 1,
                       child: FloatingActionButton(
+                        heroTag: 'btn2',
                         child: Icon(FontAwesomeIcons.timesCircle),
                         onPressed: _close,
                         backgroundColor: Colors.red,
-                      ),
-                    ),
-                    Transform.scale(
-                      scale: widget.scale.value,
-                      child: FloatingActionButton(
-                        child: Icon(Icons.music_note),
-                        onPressed: _open,
-                        backgroundColor: Color(0xFF008CCE),
                       ),
                     ),
                   ],
@@ -184,11 +230,18 @@ class _RadialAnimationState extends State<RadialAnimation> {
                 alignment: Alignment.bottomCenter,
               ),
             ),
-            Text('Selected audio: $audio'),
+            Text(
+              'Selected audio: ${audio[0].toUpperCase()}${audio.substring(1)}',
+              style: TextStyle(
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  decoration: TextDecoration.none),
+            ),
             SizedBox(
               height: 50.0,
             ),
-            GestureDetector(
+            /*GestureDetector(
               onTap: () {},
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
@@ -204,7 +257,7 @@ class _RadialAnimationState extends State<RadialAnimation> {
                   ),
                 ),
               ),
-            )
+            )*/
           ],
         );
       },
